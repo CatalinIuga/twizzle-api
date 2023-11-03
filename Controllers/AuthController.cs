@@ -26,24 +26,23 @@ public class AuthController : ControllerBase
         var user = _context.Users.FirstOrDefault(u => u.Email == loginModel.Email);
 
         if (user == null)
-            return NotFound("Email not found!");
+            return NotFound(new { authenticated = false, message = "Email not found." });
 
         if (user.Password != loginModel.Password)
-            return BadRequest("Invalid Password!");
+            return BadRequest(new { authenticated = false, message = "Incorrect password." });
 
         var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Sid, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Email, user.Email)
-
-            };
+        {
+                new(ClaimTypes.Sid, user.Id.ToString()),
+                new(ClaimTypes.Name, user.Username),
+                new(ClaimTypes.Email, user.Email)
+        };
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);
 
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
-        return Ok("Login successfull!");
+        return Ok(new { authenticated = true, message = "Login successfull." });
     }
 
     [HttpGet]
@@ -53,14 +52,14 @@ public class AuthController : ControllerBase
         var authenticateResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
         if (!authenticateResult.Succeeded)
-            return Unauthorized("User not authenticated.");
+            return Unauthorized(new { authenticated = false, message = "User not authenticated." });
 
         var userIdClaim = authenticateResult.Principal.FindFirst(ClaimTypes.Sid);
         var userNameClaim = authenticateResult.Principal.FindFirst(ClaimTypes.Name);
         var userEmailClaim = authenticateResult.Principal.FindFirst(ClaimTypes.Email);
 
         if (userNameClaim == null || userEmailClaim == null || userIdClaim == null)
-            return Unauthorized("User claims not found.");
+            return Unauthorized(new { authenticated = false, message = "Sessions claims not found." });
 
         var session = new
         {
@@ -70,7 +69,7 @@ public class AuthController : ControllerBase
         };
 
 
-        return Ok(session);
+        return Ok(new { authenticated = true, message = "User is loged in.", session });
     }
 
 
@@ -79,7 +78,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync();
-        return Ok("Signed out successfully!");
+        return Ok(new { message = "Signed out successfully!" });
     }
 
 }

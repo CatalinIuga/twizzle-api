@@ -15,14 +15,5 @@ public class Auth
         public int Id;
         public string Username;
         public string Email;
-
-
-        public Session(Claim id, Claim username, Claim email)
-        {
-            Id = int.Parse(id.Value);
-            Username = username.Value;
-            Email = email.Value;
-        }
-
     }
 }
