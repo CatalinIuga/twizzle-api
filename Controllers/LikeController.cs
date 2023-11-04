@@ -1,9 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using twizzle.Database;
 using twizzle.Models;
 
@@ -18,14 +14,12 @@ public class LikeController : ControllerBase
         _context = context;
     }
 
-    // GET: api/Like
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Like>>> GetLikes()
     {
         return await _context.Likes.Include(l => l.User).Include(l => l.Twizz).ToListAsync();
     }
 
-    // GET: api/Like/5
     [HttpGet("{id}")]
     public async Task<ActionResult<Like>> GetLike(int id)
     {
@@ -42,14 +36,19 @@ public class LikeController : ControllerBase
         return like;
     }
 
-    // POST: api/Like
     [HttpPost]
     public async Task<ActionResult<Like>> PostLike(Like like)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
+        var user = await _context.Users.FindAsync(like.UserId);
+        if (user == null)
+            return BadRequest("User not found.");
+
+        var twizz = await _context.Twizzs.FindAsync(like.TwizzId);
+        if (twizz == null)
+            return BadRequest("Twizz not found.");
+
+        like.User = user;
+        like.Twizz = twizz;
 
         // Check if the like already exists for the user and twizz
         var existingLike = await _context.Likes
@@ -62,11 +61,19 @@ public class LikeController : ControllerBase
         }
 
         var likedTwizz = await _context.Twizzs.FindAsync(like.TwizzId);
-        if (likedTwizz == null)
+        var likedComment = await _context.Comments.FindAsync(like.TwizzId);
+        if (likedTwizz != null)
+        {
+            like.User = likedTwizz.User;
+            like.Twizz = likedTwizz;
+        }
+        else if (likedComment != null)
+        {
+            like.User = likedComment.User;
+            like.Twizz = likedComment.Twizz;
+        }
+        else
             return BadRequest("User not found.");
-
-        like.User = likedTwizz.User;
-        like.Twizz = likedTwizz;
 
         like.CreatedAt = DateTime.UtcNow;
         like.UpdatedAt = DateTime.UtcNow;
@@ -77,7 +84,6 @@ public class LikeController : ControllerBase
         return CreatedAtAction("GetLike", new { id = like.Id }, like);
     }
 
-    // DELETE: api/Like/5
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteLike(int id)
     {
@@ -91,10 +97,5 @@ public class LikeController : ControllerBase
         await _context.SaveChangesAsync();
 
         return NoContent();
-    }
-
-    private bool LikeExists(int id)
-    {
-        return _context.Likes.Any(e => e.Id == id);
     }
 }

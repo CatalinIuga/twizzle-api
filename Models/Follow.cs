@@ -11,8 +11,8 @@ public class Follow
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     [JsonIgnore]
-    public User Follower { get; set; }
+    public User? Follower { get; set; }
 
     [JsonIgnore]
-    public User Following { get; set; }
+    public User? Following { get; set; }
 }

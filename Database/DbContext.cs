@@ -83,7 +83,7 @@ public class TwizzleDbContext : DbContext
             .Entity<Twizz>()
             .HasMany(t => t.Likes)
             .WithOne(l => l.Twizz)
-            .HasForeignKey(l => l.LikedId);
+            .HasForeignKey(l => l.TwizzId);
 
         // Follower -> Follower
         modelBuilder

@@ -12,7 +12,7 @@ public class Twizz
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     [JsonIgnore]
-    public User User { get; set; }
+    public User? User { get; set; }
 
     [JsonIgnore]
     public List<Comment> Comments { get; set; } = new List<Comment>();

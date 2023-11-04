@@ -1,4 +1,3 @@
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using twizzle.Database;
@@ -10,21 +9,12 @@ namespace twizzle_api.Controllers;
 [Route("api/[controller]")]
 public class UserController : ControllerBase
 {
-
     private readonly TwizzleDbContext _context;
 
     public UserController(TwizzleDbContext context)
     {
         _context = context;
     }
-
-    public class UserCreateModel
-    {
-        public string Username { get; set; }
-        public string Email { get; set; }
-        public string Password { get; set; }
-    }
-
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<User>>> GetUsers()
@@ -47,9 +37,18 @@ public class UserController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<User>> PostUser(User user)
     {
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+        user.CreatedAt = DateTime.UtcNow;
+        user.UpdatedAt = DateTime.UtcNow;
 
+        try
+        {
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict(new { message = "Username or email aleady exists." });
+        }
         return CreatedAtAction("GetUser", new { id = user.Id }, user);
     }
 
@@ -71,15 +70,15 @@ public class UserController : ControllerBase
         {
             if (!UserExists(id))
             {
-                return NotFound();
+                return NotFound(new { message = "User not found." });
             }
             else
             {
-                throw;
+                return Conflict(new { message = "Try again later." });
             }
         }
 
-        return NoContent();
+        return Ok(new { message = "User updated sucessfully." });
     }
 
     [HttpDelete("{id}")]
@@ -94,7 +93,7 @@ public class UserController : ControllerBase
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        return Ok(new { message = "User deleted successfully." });
     }
 
     private bool UserExists(int id)

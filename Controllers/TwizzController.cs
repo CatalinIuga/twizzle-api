@@ -1,9 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using twizzle.Database;
 using twizzle.Models;
 
@@ -45,19 +41,14 @@ public class TwizzController : ControllerBase
         return twizz;
     }
 
-    // POST: api/Twizz
     [HttpPost]
     public async Task<ActionResult<Twizz>> PostTwizz(Twizz twizz)
     {
         var user = await _context.Users.FindAsync(twizz.UserId);
         if (user == null)
             return BadRequest("User not found.");
+
         twizz.User = user;
-        Console.WriteLine($"THIS IS USER: {twizz.User.Username}");
-
-        if (twizz.QuotedTwizzId != null)
-            twizz.QuotedTwizz = await _context.Twizzs.FindAsync(twizz.QuotedTwizzId);
-
         twizz.CreatedAt = DateTime.UtcNow;
         twizz.UpdatedAt = DateTime.UtcNow;
 
@@ -67,7 +58,6 @@ public class TwizzController : ControllerBase
         return CreatedAtAction("GetTwizz", new { id = twizz.Id }, twizz);
     }
 
-    // PUT: api/Twizz/5
     [HttpPut("{id}")]
     public async Task<IActionResult> PutTwizz(int id, Twizz twizz)
     {
@@ -98,7 +88,6 @@ public class TwizzController : ControllerBase
         return NoContent();
     }
 
-    // DELETE: api/Twizz/5
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTwizz(int id)
     {
